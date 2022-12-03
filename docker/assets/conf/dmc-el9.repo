@@ -1,0 +1,6 @@
+[dmc-el9]
+name=DMC Production Repository
+baseurl=https://dmc-repo.web.cern.ch/dmc-repo/el9/$basearch
+gpgcheck=0
+enabled=1
+protect=0
