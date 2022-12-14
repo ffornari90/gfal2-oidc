@@ -1,35 +1,12 @@
-FROM python:3.9-bullseye AS gfal-builder
+FROM debian:bullseye-slim AS gfal-builder
 RUN apt-get update && apt-get install -y python-setuptools python-dev cmake \
-    git wget make ca-certificates gfal2 libgfal2-dev libc6-dev libmpc3 libmpfr6 \
-    libgomp1 libitm1 libatomic1 libasan5 liblsan0 libtsan0 libubsan1 libquadmath0 && apt-get clean && \
-    wget http://security.ubuntu.com/ubuntu/pool/universe/g/gcc-8/g++-8_8.4.0-3ubuntu2_amd64.deb && \
-    wget http://security.ubuntu.com/ubuntu/pool/universe/g/gcc-8/gcc-8-base_8.4.0-3ubuntu2_amd64.deb && \
-    wget http://security.ubuntu.com/ubuntu/pool/universe/g/gcc-8/gcc-8_8.4.0-3ubuntu2_amd64.deb && \
-    wget http://security.ubuntu.com/ubuntu/pool/universe/g/gcc-8/libstdc++-8-dev_8.4.0-3ubuntu2_amd64.deb && \
-    wget http://security.ubuntu.com/ubuntu/pool/universe/g/gcc-8/libgcc-8-dev_8.4.0-3ubuntu2_amd64.deb && \
-    wget http://security.ubuntu.com/ubuntu/pool/universe/g/gcc-8/libmpx2_8.4.0-3ubuntu2_amd64.deb && \
-    wget http://security.ubuntu.com/ubuntu/pool/universe/g/gcc-8/cpp-8_8.4.0-3ubuntu2_amd64.deb && \
-    wget http://archive.ubuntu.com/ubuntu/pool/main/i/isl/libisl22_0.22.1-1_amd64.deb && \
-    dpkg -i libisl22_0.22.1-1_amd64.deb && dpkg -i gcc-8-base_8.4.0-3ubuntu2_amd64.deb && \
-    dpkg -i libmpx2_8.4.0-3ubuntu2_amd64.deb && dpkg -i libgcc-8-dev_8.4.0-3ubuntu2_amd64.deb && \
-    dpkg -i libstdc++-8-dev_8.4.0-3ubuntu2_amd64.deb && dpkg -i cpp-8_8.4.0-3ubuntu2_amd64.deb && \
-    dpkg -i gcc-8_8.4.0-3ubuntu2_amd64.deb && dpkg -i g++-8_8.4.0-3ubuntu2_amd64.deb && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 110 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 110 && \
-    update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-8 110 && \
-    update-alternatives --install /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-8 110 && \
-    update-alternatives --install /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-8 110 && \
-    update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-8 110 && \
-    update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-8 110 && \
+    git wget make ca-certificates gfal2 libgfal2-dev gcc g++ && \
     wget https://boostorg.jfrog.io/artifactory/main/release/1.67.0/source/boost_1_67_0.tar.gz && \
     tar xf boost_1_67_0.tar.gz && cd boost_1_67_0 && \
     ./bootstrap.sh --with-python=/usr/bin/python && \
-    ./b2 install --with-python && \
-    ./bootstrap.sh --with-python=/usr/bin/python3.9 && \
     ./b2 install --with-python && cd .. && \
     git clone https://github.com/cern-fts/gfal2-python.git && \
-    cd gfal2-python && \
-    git checkout tags/v1.10.1 && \
+    cd gfal2-python && git checkout tags/v1.10.0 && \
     sed -i '24s/.*/                string(REGEX REPLACE ".*version (.*)\\n" "\\\\1" "${EPYDOC_VERSION}" "${EPYDOC_VERSION_UNPARSED}")/' \
     cmake/modules/MacroAddepydoc.cmake && \
     sed -i '32s/.*/        IF("${EPYDOC_VERSION}" VERSION_GREATER  "3.0.0")/' \
@@ -37,10 +14,61 @@ RUN apt-get update && apt-get install -y python-setuptools python-dev cmake \
     mkdir build && cd build && cmake -Wno-dev .. && \
     make && make install && cd ../.. && mkdir /usr/local/gfal2-util && \
     git clone https://github.com/cern-fts/gfal2-util.git && \
-    cd gfal2-util && python3 setup.py install --prefix=/usr/local/gfal2-util
+    cd gfal2-util && git checkout tags/v1.6.0 && \
+    python2.7 setup.py install --prefix=/usr/local/gfal2-util
 
-FROM gcr.io/distroless/python3-debian11
-#ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+FROM gcr.io/distroless/base-debian11
+COPY --from=gfal-builder \
+ /lib/x86_64-linux-gnu/liblzma.so.5 \
+ /lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /lib/x86_64-linux-gnu/libgpg-error.so.0 \
+ /lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libssh2.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libgcrypt.so.20 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/liblz4.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libzstd.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libsystemd.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libtinyxml.so.2.6.2 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libicudata.so.67 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libicuuc.so.67 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libgsoapssl++-2.8.104.so \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libuuid.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libxml2.so.2 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libffi.so.7 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /lib/x86_64-linux-gnu/libgcc_s.so.1 \
+ /lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libstdc++.so.6 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /lib/x86_64-linux-gnu/libz.so.1 \
+ /lib/x86_64-linux-gnu/
 COPY --from=gfal-builder \
  /lib/x86_64-linux-gnu/libselinux.so.1 \
  /lib/x86_64-linux-gnu/
@@ -95,18 +123,13 @@ COPY --from=gfal-builder \
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libglib-2.0.so.0 \
  /usr/lib/x86_64-linux-gnu/
-#COPY --from=gfal-builder \
-# /usr/local/lib \
-# /usr/local/lib/
-#COPY --from=gfal-builder \
-# /usr/local/lib/libboost_python39.a \
-# /usr/lib/x86_64-linux-gnu/
-#COPY --from=gfal-builder \
-# /usr/local/lib/libpython3.9.so.1.0 \
-# /usr/lib/x86_64-linux-gnu/
 COPY --from=gfal-builder \
- /usr/local/lib/libboost_python39.so.1.67.0 \
+ /usr/lib/x86_64-linux-gnu/libpython2.7.so.1.0 \
  /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/local/lib/libboost_python27.so.1.67.0 \
+ /usr/lib/x86_64-linux-gnu/
+
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libgfal2.so.2 \
  /usr/lib/x86_64-linux-gnu/
@@ -116,22 +139,122 @@ COPY --from=gfal-builder \
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libgfal_srm_ifce.so.1 \
  /usr/lib/x86_64-linux-gnu/
+
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libdcap.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libdavix.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libdavix_copy.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libXrdXml.so.3 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libXrdUtils.so.3 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libXrdCl.so.3 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libXrdPosix.so.3 \
+ /usr/lib/x86_64-linux-gnu/
+
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libltdl.so.7 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libcgsi_plugin.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gssapi_gsi.so.4 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gss_assist.so.3 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_common.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gass_copy.so.2 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_ftp_control.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_ftp_client.so.2 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gass_transfer.so.2 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gssapi_error.so.2 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_io.so.3 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_xio.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gsi_sysconfig.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gsi_credential.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gsi_callback.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gsi_proxy_core.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_openssl_error.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_openssl.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_callout.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_gsi_cert_utils.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_proxy_ssl.so.1 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_oldgaa.so.0 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libglobus_thread_pthread.so \
+ /usr/lib/x86_64-linux-gnu/
+
 COPY --from=gfal-builder \
  /usr/local/gfal2-util/bin \
  /usr/local/bin/
 COPY --from=gfal-builder \
- /usr/local/lib/python3.9/site-packages/gfal2.so \
- /usr/lib/python3.9/
+ /usr/lib/x86_64-linux-gnu/gfal2-plugins \
+ /usr/lib/x86_64-linux-gnu/gfal2-plugins/
 COPY --from=gfal-builder \
- /usr/local/gfal2-util/lib/python3.9/site-packages/gfal2_util \
- /usr/lib/python3.9/gfal2_util/
+ /etc/gfal2.d \
+ /etc/gfal2.d/
 COPY --from=gfal-builder \
- /usr/local/gfal2-util/lib/python3.9/site-packages/gfal2_util-1.8.0-py3.9.egg-info \
- /usr/lib/python3.9/
+ /usr/local/gfal2-util/lib/python2.7/site-packages/gfal2_util \
+ /usr/lib/python2.7/gfal2_util/
+COPY --from=gfal-builder \
+ /usr/local/gfal2-util/lib/python2.7/site-packages/gfal2_util-1.6.0-py2.7.egg-info \
+ /usr/lib/python2.7/
 COPY --from=gfal-builder \
  /bin/ls /bin
 COPY --from=gfal-builder \
  /bin/sh /bin
 COPY --from=gfal-builder \
- /usr/bin/python3 /usr/bin/python
+ /usr/lib/python2.7 \
+ /usr/lib/python2.7/
+COPY --from=gfal-builder \
+ /usr/bin/python2.7 /usr/bin/python
 ENTRYPOINT ["/bin/sh"]
