@@ -49,6 +49,9 @@ COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libicuuc.so.67 \
  /usr/lib/x86_64-linux-gnu/
 COPY --from=gfal-builder \
+ /usr/lib/x86_64-linux-gnu/libgsoap-2.8.104.so \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libgsoapssl++-2.8.104.so \
  /usr/lib/x86_64-linux-gnu/
 COPY --from=gfal-builder \
@@ -70,14 +73,8 @@ COPY --from=gfal-builder \
  /lib/x86_64-linux-gnu/libz.so.1 \
  /lib/x86_64-linux-gnu/
 COPY --from=gfal-builder \
- /lib/x86_64-linux-gnu/libselinux.so.1 \
- /lib/x86_64-linux-gnu/
-COPY --from=gfal-builder \
  /lib/x86_64-linux-gnu/libpcre.so.3 \
  /lib/x86_64-linux-gnu/
-COPY --from=gfal-builder \
- /usr/lib/x86_64-linux-gnu/libpcre2-8.so.0 \
- /usr/lib/x86_64-linux-gnu/
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libgmp.so.10 \
  /usr/lib/x86_64-linux-gnu/
@@ -129,7 +126,6 @@ COPY --from=gfal-builder \
 COPY --from=gfal-builder \
  /usr/local/lib/libboost_python27.so.1.67.0 \
  /usr/lib/x86_64-linux-gnu/
-
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libgfal2.so.2 \
  /usr/lib/x86_64-linux-gnu/
@@ -139,7 +135,6 @@ COPY --from=gfal-builder \
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libgfal_srm_ifce.so.1 \
  /usr/lib/x86_64-linux-gnu/
-
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libdcap.so.1 \
  /usr/lib/x86_64-linux-gnu/
@@ -149,7 +144,6 @@ COPY --from=gfal-builder \
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libdavix_copy.so.0 \
  /usr/lib/x86_64-linux-gnu/
-
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libXrdXml.so.3 \
  /usr/lib/x86_64-linux-gnu/
@@ -162,7 +156,6 @@ COPY --from=gfal-builder \
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libXrdPosix.so.3 \
  /usr/lib/x86_64-linux-gnu/
-
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libltdl.so.7 \
  /usr/lib/x86_64-linux-gnu/
@@ -232,7 +225,6 @@ COPY --from=gfal-builder \
 COPY --from=gfal-builder \
  /usr/lib/x86_64-linux-gnu/libglobus_thread_pthread.so \
  /usr/lib/x86_64-linux-gnu/
-
 COPY --from=gfal-builder \
  /usr/local/gfal2-util/bin \
  /usr/local/bin/
@@ -248,8 +240,6 @@ COPY --from=gfal-builder \
 COPY --from=gfal-builder \
  /usr/local/gfal2-util/lib/python2.7/site-packages/gfal2_util-1.6.0-py2.7.egg-info \
  /usr/lib/python2.7/
-COPY --from=gfal-builder \
- /bin/ls /bin
 COPY --from=gfal-builder \
  /bin/sh /bin
 COPY --from=gfal-builder \
