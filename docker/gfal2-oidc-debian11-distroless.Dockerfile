@@ -1,16 +1,9 @@
 FROM debian:bullseye-slim AS builder
 ENV BIN_PATH=/usr/local/oidc-agent
-RUN apt-get update && \
-    apt-get install -y \
-    libcurl4-openssl-dev \
-    libsodium-dev \
-    libmicrohttpd-dev \
-    libsecret-1-dev \
-    libqrencode-dev \
-    libwebkit2gtk-4.0-dev \
-    libcjson-dev \
-    git build-essential \
-    help2man && \
+RUN apt-get update && apt-get install -y libcurl4-openssl-dev \
+    libsodium-dev libmicrohttpd-dev libsecret-1-dev \
+    libqrencode-dev libwebkit2gtk-4.0-dev libcjson-dev \
+    git build-essential help2man jq && \
     git clone https://github.com/indigo-dc/oidc-agent && \
     cd oidc-agent && mkdir /usr/local/oidc-agent && \
     make && make install && cd .. && \
@@ -33,6 +26,7 @@ RUN apt-get update && \
     python2.7 setup.py install --prefix=/usr/local/gfal2-util
 
 FROM gcr.io/distroless/base-debian11
+ENV PATH=/usr/local/oidc-agent/bin:$PATH
 COPY --from=builder \
  /lib/x86_64-linux-gnu/liblzma.so.5 \
  /lib/x86_64-linux-gnu/libgpg-error.so.0 \
@@ -42,8 +36,11 @@ COPY --from=builder \
  /lib/x86_64-linux-gnu/libgcc_s.so.1 \
  /lib/x86_64-linux-gnu/libz.so.1 \
  /lib/x86_64-linux-gnu/libpcre.so.3 \
+ /lib/x86_64-linux-gnu/libtinfo.so.6 \
  /lib/x86_64-linux-gnu/
 COPY --from=builder \
+ /usr/lib/x86_64-linux-gnu/libonig.so.5 \
+ /usr/lib/x86_64-linux-gnu/libjq.so.1 \
  /usr/lib/x86_64-linux-gnu/libblkid.so.1 \
  /usr/lib/x86_64-linux-gnu/libmount.so.1 \
  /usr/lib/x86_64-linux-gnu/libgmodule-2.0.so.0 \
@@ -65,6 +62,7 @@ COPY --from=builder \
  /usr/lib/x86_64-linux-gnu/libsodium.so.23 \
  /usr/lib/x86_64-linux-gnu/libsecret-1.so.0 \
  /usr/lib/x86_64-linux-gnu/libmicrohttpd.so.12 \
+ /usr/lib/x86_64-linux-gnu/liboidc-agent.so.4 \
  /usr/lib/x86_64-linux-gnu/libssh2.so.1 \
  /usr/lib/x86_64-linux-gnu/libgcrypt.so.20 \
  /usr/lib/x86_64-linux-gnu/liblz4.so.1 \
@@ -95,7 +93,6 @@ COPY --from=builder \
  /usr/lib/x86_64-linux-gnu/libgthread-2.0.so.0 \
  /usr/lib/x86_64-linux-gnu/libglib-2.0.so.0 \
  /usr/lib/x86_64-linux-gnu/libpython2.7.so.1.0 \
- /usr/local/lib/libboost_python27.so.1.67.0 \
  /usr/lib/x86_64-linux-gnu/libgfal2.so.2 \
  /usr/lib/x86_64-linux-gnu/libgfal_transfer.so.2 \
  /usr/lib/x86_64-linux-gnu/libgfal_srm_ifce.so.1 \
@@ -129,6 +126,7 @@ COPY --from=builder \
  /usr/lib/x86_64-linux-gnu/libglobus_proxy_ssl.so.1 \
  /usr/lib/x86_64-linux-gnu/libglobus_oldgaa.so.0 \
  /usr/lib/x86_64-linux-gnu/libglobus_thread_pthread.so \
+ /usr/local/lib/libboost_python27.so.1.67.0 \
  /usr/lib/x86_64-linux-gnu/
 COPY --from=builder \
  /usr/lib/x86_64-linux-gnu/gfal2-plugins \
@@ -148,9 +146,14 @@ COPY --from=builder \
 COPY --from=builder \
  /usr/bin/python2.7 /usr/bin/python
 COPY --from=builder \
- /bin/sh /bin
+ /bin/sh /bin/ls /bin/bash /bin/cat \
+ /bin/echo /bin/mkdir /bin/ln /bin/
+COPY --from=builder \
+ /usr/local/oidc-agent \
+ /usr/local/oidc-agent/
 COPY --from=builder \
  /usr/local/gfal2-util/bin \
- /usr/local/oidc-agent/bin \
+ /usr/bin/oidc-prompt \
+ /usr/bin/jq \
  /usr/bin/
 ENTRYPOINT ["/bin/sh"]
