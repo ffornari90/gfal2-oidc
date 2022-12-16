@@ -1,0 +1,45 @@
+version: "3.7"
+
+volumes:
+  trust-volume:
+  grid-certs:
+
+services:
+  trust:
+    image: alpine
+    command: /bin/sh -c "
+        wget \"http://repository.egi.eu/sw/production/cas/1/current/tgz/\" &&
+        mkdir tgz && for tgz in $$(cat index.html | awk -F'\"' '{print $$2}' | grep tar.gz);
+        do wget http://repository.egi.eu/sw/production/cas/1/current/tgz/$$tgz -O tgz/$$tgz;
+        done && for tgz in $$(ls tgz/);
+        do tar xzf tgz/$$tgz --strip-components=1 -C certificates/; done &&
+        for f in $$(find certificates/ -type f -name \"*.pem\");
+        do cat $$f >> /certs/ca-certificates.crt; done &&
+        wget \"https://crt.sh/?d=2475254782\" -O /certs/geant-ov-rsa-ca.crt &&
+        cat /certs/geant-ov-rsa-ca.crt >> /certs/ca-certificates.crt &&
+        nc -l -p 8085
+      "
+    volumes:
+      - trust-volume:/certs
+      - grid-certs:/certificates
+
+  client:
+    image: ffornari/gfal2-oidc:debian12-distroless
+    container_name: client
+    command: -c "
+        tail -f /dev/null
+      "
+    extra_hosts:
+      - "${IAM_HOST}:${IAM_IP}"
+    links:
+      - "trust:trust"
+    environment:
+      IAM_HOST: ${IAM_HOST}
+
+    volumes:
+      - trust-volume:/etc/ssl/certs
+      - grid-certs:/etc/grid-security/certificates
+
+    depends_on:
+      - trust
+
