@@ -30,6 +30,7 @@ RUN apt-get update && \
     cd gfal2-util && python3 setup.py install --prefix=/usr/local/gfal2-util
  
 FROM debian:bookworm-slim
+ENV PATH=/usr/local/oidc-agent/bin:$PATH
 RUN apt-get update && \
     apt-get install -y \
     libmicrohttpd12 \
@@ -40,12 +41,15 @@ RUN apt-get update && \
     python3 \
     libboost-python1.74.0 \
     gfal2 \
-    man && \
+    man jq && \
     apt-get clean && \
     ln -s /usr/bin/python3 /usr/bin/python
 COPY --from=oidc-builder \
- /usr/local/oidc-agent/bin \
- /usr/local/bin/
+ /usr/lib/x86_64-linux-gnu/liboidc-agent.so.4 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=oidc-builder \
+ /usr/local/oidc-agent \
+ /usr/local/oidc-agent/
 COPY --from=gfal-builder \
  /usr/lib/python3/dist-packages/gfal2.so \
  /usr/lib/python3/dist-packages/
