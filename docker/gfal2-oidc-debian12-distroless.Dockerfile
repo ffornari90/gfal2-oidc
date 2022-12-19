@@ -161,8 +161,14 @@ COPY --from=builder \
 COPY --from=builder \
  /usr/local/gfal2-util/bin \
  /usr/bin/oidc-prompt \
+ /usr/bin/realpath \
+ /usr/bin/readlink \
+ /usr/bin/timeout \
+ /usr/bin/sleep \
+ /usr/bin/date \
  /usr/bin/tail \
  /usr/bin/head \
+ /usr/bin/env \
  /usr/bin/jq \
  /usr/bin/
-ENTRYPOINT ["/bin/sh"]
+CMD ["/bin/sh"]

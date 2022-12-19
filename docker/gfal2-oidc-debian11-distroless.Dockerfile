@@ -39,6 +39,7 @@ COPY --from=builder \
  /lib/x86_64-linux-gnu/libtinfo.so.6 \
  /lib/x86_64-linux-gnu/
 COPY --from=builder \
+ /usr/lib/x86_64-linux-gnu/liboidc-agent.so.4 \
  /usr/lib/x86_64-linux-gnu/libonig.so.5 \
  /usr/lib/x86_64-linux-gnu/libjq.so.1 \
  /usr/lib/x86_64-linux-gnu/libblkid.so.1 \

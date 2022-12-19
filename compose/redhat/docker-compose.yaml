@@ -1,0 +1,64 @@
+version: "3.7"
+
+volumes:
+  trustanchors:
+  cabundle:
+
+services:
+  trust:
+    image: indigoiam/egi-trustanchors:latest
+    container_name: trust
+    hostname: trust
+    entrypoint:
+      /bin/sh -c "
+        yum install -y epel-release
+        && yum install -y netcat wget
+        && /update-trust-anchors.sh
+        && wget \"https://crt.sh/?d=2475254782\" -O /etc/pki/ca-trust/source/anchors/geant-ov-rsa-ca.pem
+        && wget \"http://131.154.97.87:8080/certs/chain1.pem\" -O /etc/pki/ca-trust/source/anchors/chain1.pem
+        && cat /etc/pki/ca-trust/source/anchors/geant-ov-rsa-ca.pem >> /etc/pki/tls/certs/ca-bundle.crt
+        && cat /etc/pki/ca-trust/source/anchors/chain1.pem >> /etc/pki/tls/certs/ca-bundle.crt
+        && nc -k -l 8085
+      "
+
+    environment:
+      FORCE_TRUST_ANCHORS_UPDATE: 1
+
+    volumes:
+      - trustanchors:/etc/grid-security/certificates
+      - cabundle:/etc/pki
+
+  client:
+    image: ffornari/gfal2-oidc:${IMAGE_TAG}
+    container_name: client
+    command: /bin/sh -c "
+        /scripts/wait-for-it.sh -t 0 trust:8085 &&
+        eval $(oidc-agent-service use) &&
+        oidc-gen --scope-all --confirm-default --iss=https://$IAM_HOST/ docker &&
+        export BEARER_TOKEN=$(oidc-token docker) &&
+        gfal-ls -lH https://$WEBDAV_HOST/$STORAGE_AREA &&
+        gfal-copy /etc/services https://$WEBDAV_HOST/$STORAGE_AREA/testfile &&
+        gfal-ls -lH https://$WEBDAV_HOST/$STORAGE_AREA &&
+        gfal-rm https://$WEBDAV_HOST/$STORAGE_AREA/testfile &&
+        gfal-ls -lH https://$WEBDAV_HOST/$STORAGE_AREA &&
+        tail -f /dev/null
+      "
+    extra_hosts:
+      - "${IAM_HOST}:${IAM_IP}"
+    links:
+      - "trust:trust"
+
+    environment:
+      IAM_HOST: ${IAM_HOST}
+      WEBDAV_HOST: ${WEBDAV_HOST}
+      STORAGE_AREA: ${STORAGE_AREA}
+      OIDC_ENCRYPTION_PW: ${OIDC_ENCRYPTION_PW}
+      LD_LIBRARY_PATH: /usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+
+    volumes:
+      - ./scripts/wait-for-it.sh:/scripts/wait-for-it.sh
+      - trustanchors:/etc/grid-security/certificates
+      - cabundle:/etc/pki
+
+    depends_on:
+      - trust

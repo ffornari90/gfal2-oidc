@@ -41,6 +41,7 @@ RUN \
     cd gfal2-util && python3 setup.py install --prefix=/usr/local/gfal2-util
  
 FROM registry.access.redhat.com/ubi8/ubi-minimal
+ENV PATH=/usr/local/oidc-agent/bin:$PATH
 COPY ./assets/conf/dmc-el8.repo /etc/yum.repos.d/
 RUN \
     rpm -ivh http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/Packages/centos-gpg-keys-8-6.el8.noarch.rpm && \
@@ -54,11 +55,14 @@ RUN \
     python3 \
     boost-python3 \
     gfal2-all \
-    man && \
+    man jq && \
     microdnf clean all
 COPY --from=oidc-builder \
- /usr/local/oidc-agent/bin \
- /usr/local/bin/
+ /usr/lib/x86_64-linux-gnu/liboidc-agent.so.4 \
+ /usr/lib/x86_64-linux-gnu/
+COPY --from=oidc-builder \
+ /usr/local/oidc-agent \
+ /usr/local/oidc-agent/
 COPY --from=gfal-builder \
  /usr/lib64/python3.6/site-packages/gfal2.so \
  /usr/lib64/python3.6/site-packages/

@@ -3,11 +3,10 @@
 Docker configuration files for lightweight containers with gfal tools and oidc-agent.
 ```
 $ docker images -f "reference=ffornari/gfal2-oidc"
-REPOSITORY            TAG                   IMAGE ID       CREATED          SIZE
-ffornari/gfal2-oidc   debian12-distroless   140d95a60130   4 minutes ago    145MB
-ffornari/gfal2-oidc   debian10-distroless   8bf55fee5d68   8 minutes ago    203MB
-ffornari/gfal2-oidc   ubi9                  ebeaee7f7508   15 minutes ago   205MB
-ffornari/gfal2-oidc   ubi8                  02dec3dd1b20   26 minutes ago   223MB
-ffornari/gfal2-oidc   debian-slim           5a14a850b7f2   4 hours ago      270MB
-ffornari/gfal2-oidc   ubuntu                984762ccd175   41 hours ago     276MB
+REPOSITORY            TAG                   IMAGE ID       CREATED             SIZE
+ffornari/gfal2-oidc   debian12-distroless   96aebd8aa637   About an hour ago   145MB
+ffornari/gfal2-oidc   debian10-distroless   9afca5d8cba4   2 hours ago         203MB
+ffornari/gfal2-oidc   ubi9                  47231d54ea0e   2 hours ago         207MB
+ffornari/gfal2-oidc   ubi8                  838950f8b6af   2 hours ago         225MB
+ffornari/gfal2-oidc   debian-slim           94d496ec5f43   2 hours ago         272MB
 ```

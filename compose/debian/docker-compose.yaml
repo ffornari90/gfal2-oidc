@@ -25,9 +25,18 @@ services:
       - grid-certs:/certificates
 
   client:
-    image: ffornari/gfal2-oidc:debian12-distroless
+    image: ffornari/gfal2-oidc:${IMAGE_TAG}
     container_name: client
-    command: -c "
+    command: /bin/sh -c "
+        /scripts/wait-for-it.sh -t 0 trust:8085 &&
+        eval $(oidc-agent-service use) &&
+        oidc-gen --scope-all --confirm-default --iss=https://$IAM_HOST/ docker &&
+        export BEARER_TOKEN=$(oidc-token docker) &&
+        gfal-ls -lH https://$WEBDAV_HOST/$STORAGE_AREA &&
+        gfal-copy /etc/services https://$WEBDAV_HOST/$STORAGE_AREA/testfile &&
+        gfal-ls -lH https://$WEBDAV_HOST/$STORAGE_AREA &&
+        gfal-rm https://$WEBDAV_HOST/$STORAGE_AREA/testfile &&
+        gfal-ls -lH https://$WEBDAV_HOST/$STORAGE_AREA &&
         tail -f /dev/null
       "
     extra_hosts:
@@ -36,10 +45,14 @@ services:
       - "trust:trust"
     environment:
       IAM_HOST: ${IAM_HOST}
+      WEBDAV_HOST: ${WEBDAV_HOST}
+      STORAGE_AREA: ${STORAGE_AREA}
+      OIDC_ENCRYPTION_PW: ${OIDC_ENCRYPTION_PW}
 
     volumes:
       - trust-volume:/etc/ssl/certs
       - grid-certs:/etc/grid-security/certificates
+      - ./scripts/wait-for-it.sh:/scripts/wait-for-it.sh
 
     depends_on:
       - trust
