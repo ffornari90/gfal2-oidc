@@ -154,7 +154,9 @@ COPY --from=builder \
  /usr/bin/python3.10 /usr/bin/python
 COPY --from=builder \
  /bin/sh /bin/ls /bin/bash /bin/cat \
- /bin/echo /bin/mkdir /bin/ln /bin/
+ /bin/echo /bin/mkdir /bin/ln \
+ /bin/rm /bin/cp /bin/mv \
+ /bin/
 COPY --from=builder \
  /usr/local/oidc-agent \
  /usr/local/oidc-agent/

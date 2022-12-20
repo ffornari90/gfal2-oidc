@@ -148,13 +148,21 @@ COPY --from=builder \
  /usr/bin/python2.7 /usr/bin/python
 COPY --from=builder \
  /bin/sh /bin/ls /bin/bash /bin/cat \
- /bin/echo /bin/mkdir /bin/ln /bin/
+ /bin/readlink /bin/echo /bin/mkdir \
+ /bin/date /bin/sleep /bin/ln \
+ /bin/rm /bin/mv /bin/cp \
+ /bin/
 COPY --from=builder \
  /usr/local/oidc-agent \
  /usr/local/oidc-agent/
 COPY --from=builder \
  /usr/local/gfal2-util/bin \
  /usr/bin/oidc-prompt \
+ /usr/bin/realpath \
+ /usr/bin/timeout \
+ /usr/bin/tail \
+ /usr/bin/head \
+ /usr/bin/env \
  /usr/bin/jq \
  /usr/bin/
-ENTRYPOINT ["/bin/sh"]
+CMD ["/bin/sh"]
