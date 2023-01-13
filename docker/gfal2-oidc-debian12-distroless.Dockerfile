@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim AS builder
+FROM debian:bookworm-20221205-slim AS builder
 ENV BIN_PATH=/usr/local/oidc-agent
 RUN apt-get update && apt-get install -y libcurl4-openssl-dev \
     libsodium-dev libmicrohttpd-dev libsecret-1-dev \
