@@ -1,4 +1,4 @@
-FROM debian:bookworm-20221205-slim AS builder
+FROM debian:bookworm-slim AS builder
 ENV BIN_PATH=/usr/local/oidc-agent
 RUN apt-get update && apt-get install -y libcurl4-openssl-dev \
     libsodium-dev libmicrohttpd-dev libsecret-1-dev \
@@ -6,18 +6,20 @@ RUN apt-get update && apt-get install -y libcurl4-openssl-dev \
     git build-essential help2man jq && \
     git clone https://github.com/indigo-dc/oidc-agent && \
     cd oidc-agent && mkdir /usr/local/oidc-agent && \
+    git checkout tags/v4.5.2 && \
     make && make install && cd .. && \
     apt-get install -y cmake build-essential libboost-python-dev \
     python3-setuptools gfal2 libgfal2-dev && \
     git clone https://github.com/cern-fts/gfal2-python.git && \
-    cd gfal2-python && git checkout tags/v1.11.1 && \
+    cd gfal2-python && \
+    git checkout tags/v1.12.1 && \
     mkdir build && cd build && cmake .. && \
     make && make install && cd ../.. && \
     mkdir /usr/local/gfal2-util && \
     git clone https://github.com/cern-fts/gfal2-util.git && \
     cd gfal2-util && python3 setup.py install --prefix=/usr/local/gfal2-util
 
-FROM ghcr.io/yumemi-inc/distroless-static-debian12
+FROM gcr.io/distroless/python3-debian12
 ENV PATH=/usr/local/oidc-agent/bin:$PATH
 COPY --from=builder \
  /lib64/ld-linux-x86-64.so.2 \
@@ -75,8 +77,8 @@ COPY --from=builder \
  /usr/lib/x86_64-linux-gnu/libtinyxml.so.2.6.2 \
  /usr/lib/x86_64-linux-gnu/libicudata.so.72 \
  /usr/lib/x86_64-linux-gnu/libicuuc.so.72 \
- /usr/lib/x86_64-linux-gnu/libgsoap-2.8.117.so \
- /usr/lib/x86_64-linux-gnu/libgsoapssl++-2.8.117.so \
+ /usr/lib/x86_64-linux-gnu/libgsoap-2.8.124.so \
+ /usr/lib/x86_64-linux-gnu/libgsoapssl++-2.8.124.so \
  /usr/lib/x86_64-linux-gnu/libuuid.so.1 \
  /usr/lib/x86_64-linux-gnu/libxml2.so.2 \
  /usr/lib/x86_64-linux-gnu/libffi.so.8 \
@@ -96,7 +98,6 @@ COPY --from=builder \
  /usr/lib/x86_64-linux-gnu/libldap-2.5.so.0 \
  /usr/lib/x86_64-linux-gnu/libgthread-2.0.so.0 \
  /usr/lib/x86_64-linux-gnu/libglib-2.0.so.0 \
- /usr/lib/x86_64-linux-gnu/libpython3.10.so.1.0 \
  /usr/lib/x86_64-linux-gnu/libgfal2.so.2 \
  /usr/lib/x86_64-linux-gnu/libgfal_transfer.so.2 \
  /usr/lib/x86_64-linux-gnu/libgfal_srm_ifce.so.1 \
@@ -130,7 +131,7 @@ COPY --from=builder \
  /usr/lib/x86_64-linux-gnu/libglobus_proxy_ssl.so.1 \
  /usr/lib/x86_64-linux-gnu/libglobus_oldgaa.so.0 \
  /usr/lib/x86_64-linux-gnu/libglobus_thread_pthread.so \
- /usr/lib/x86_64-linux-gnu/libboost_python310.so.1.74.0 \
+ /usr/lib/x86_64-linux-gnu/libboost_python311.so.1.74.0 \
  /usr/lib/x86_64-linux-gnu/
 COPY --from=builder \
  /usr/lib/x86_64-linux-gnu/gfal2-plugins \
@@ -139,19 +140,11 @@ COPY --from=builder \
  /etc/gfal2.d \
  /etc/gfal2.d/
 COPY --from=builder \
- /usr/lib/python3.10 \
- /usr/lib/python3.10/
-COPY --from=builder \
- /usr/lib/python3/dist-packages/gfal2.so \
+ /usr/lib/python3/dist-packages \
  /usr/lib/python3/dist-packages/
 COPY --from=builder \
- /usr/local/gfal2-util/lib/python3.10/site-packages/gfal2_util \
- /usr/lib/python3.10/gfal2_util/
-COPY --from=builder \
- /usr/local/gfal2-util/lib/python3.10/site-packages/gfal2_util-1.8.0-py3.10.egg-info \
- /usr/lib/python3.10/
-COPY --from=builder \
- /usr/bin/python3.10 /usr/bin/python
+ /usr/local/gfal2-util/local/lib/python3.11/dist-packages/gfal2_util-1.8.1-py3.11.egg \
+ /usr/lib/python3.11/
 COPY --from=builder \
  /bin/sh /bin/ls /bin/bash /bin/cat \
  /bin/echo /bin/mkdir /bin/ln \
@@ -161,7 +154,7 @@ COPY --from=builder \
  /usr/local/oidc-agent \
  /usr/local/oidc-agent/
 COPY --from=builder \
- /usr/local/gfal2-util/bin \
+ /usr/local/gfal2-util/local/bin \
  /usr/bin/oidc-prompt \
  /usr/bin/realpath \
  /usr/bin/readlink \
@@ -173,4 +166,5 @@ COPY --from=builder \
  /usr/bin/env \
  /usr/bin/jq \
  /usr/bin/
-CMD ["/bin/sh"]
+ENTRYPOINT [""]
+CMD ["/bin/bash"]
