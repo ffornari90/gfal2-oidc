@@ -143,7 +143,7 @@ COPY --from=builder \
  /usr/lib/python3/dist-packages \
  /usr/lib/python3/dist-packages/
 COPY --from=builder \
- /usr/local/gfal2-util/local/lib/python3.11/dist-packages/gfal2_util-1.8.1-py3.11.egg \
+ /usr/local/gfal2-util/local/lib/python3.11/dist-packages/gfal2_util-1.9.0-py3.11.egg \
  /usr/lib/python3.11/
 COPY --from=builder \
  /bin/sh /bin/ls /bin/bash /bin/cat \
